@@ -90,18 +90,10 @@ void *thread(void *arg)
 {
 	int socketfd = *(int*)arg;
 	printf("socketfd in pthread=%d\n",socketfd);
-	
-	count++;
-	printf("count:%d",count);
 	while(1)
 	{	
 		//接收数组清零
 		bzero(Buff, sizeof(Buff));
-		printf("count:%d");
-		if(count!=count_flag)
-		{
-			socketfd_rec = socketfd;
-		}
 		//子线程堵塞在这里（recv函数也会堵塞）
 		rec_n = recv(socketfd,Buff,1024,0);
 		//数据有效
@@ -109,13 +101,10 @@ void *thread(void *arg)
 		{
 			if(Buff[0]==0x30&&Buff[1]==0x31)
 			{
-				socketfd_send = socketfd;
-				count_flag=count;
 				
 			}
 			
 			send(socketfd_rec, Buff, sizeof(Buff), 0);
-			printf("rev:%d send:%d",socketfd_rec, socketfd_send);
 		}
 		//rec_n=0则说明客户端断开
 		
