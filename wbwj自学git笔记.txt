@@ -1,0 +1,67 @@
+git使用教程：
+
+1.https://github.com/
+2.创建新的github账户
+(本人账号：wbwj；邮箱：2417353991@qq.com；密码：wbwj520.)
+（老王账号：NOT-old-wang；密码：wangJUN1995）
+（大柱账号：Da-Zhu；邮箱：2609049393@qq.com；密码吗qwe123456）
+3.下载git for windows（32位或者64位）
+4.安装完成后打开Git Bash Here
+5.设置Git与Github通讯：
+	ssh-keygen -t rsa -C "注册时邮箱（一定要正确）"
+	（一路回车可以生成一个密码文件（有些需要用记事本方式打开））
+	进入github网站添加SSH钥匙
+	ssh -T git@github.com
+6.git中创建名字邮箱：
+	git config --global user.name "名字"（可以随意，最好与网站信息一致）
+	git config --global user.email "2417353991@qq.com"(必须一致)
+7.克隆库：
+	git clone (后面加入需要下载文件的网址)
+        下载的位置可以随意定义（自己存放的位置：cd /E/GitHub）
+	需要上传文件时：
+		git add 文件名字
+		git commit -m "备注文件作用等"
+		git push origin master(或者填写自己建立的分支)（会出现登录界面……）
+
+8.git 指令集：
+	
+	git status (查看仓库当前的状态，是否需要再次提交)
+	git diff 文件名字 (与提交过的文件作比较改变了哪里)
+	git log (最近到最远的提交日志)
+		感觉太多内容输出时:git log --pretty=online
+	git reset --hard HEAD (用HEAD表示当前版本，上一个HEAD^,...HEAD^100)
+		想要回到之前退回的最新版本（找到前7位的版本号）
+		git reset --hard 7位版本号
+		万一不小心关掉了界面(可以使用git reflog查看每一次的命令)
+	git add（把所有修改的东西防盗暂存区）
+	git commit(把所有的修改提交到分支)
+	git checkout -- 文件名（丢弃工作区的修改）
+	git reset HEAD 文件名 (撤销暂存区的修改)
+	rm 文件名 （文件删除）
+	git rm 文件名 （从版本库中删除该文件）
+	git checkout -- 文件名 (将误删的文件恢复到最新版本)
+	git remote add origin git@github.com:wbwj/文件名.git (本地关联自己的远程库)
+		将本地库所有内容都上传到远程库：git push -u origin master
+	
+	git branch (查看分支)
+	git branch 名字 （创建分支）
+        git checkout 名字 （切换分支）
+	git checkout -b 名字 （创建+切换分支）
+	git merge 名字 （合并某分支到当前分支）
+	git branch -d 名字 （删除分支）
+	git log --graph （--pretty=oneline --abbrev-commit） （分支的合并情况）
+	
+9.本地仓库git init将其变成Git仓库
+  将项目赋值到此文件夹中，再通过git add .将项目添加到仓库
+  通过git commit -m "注释内容" 将项目提交到仓库
+  在github上建立一个仓库
+  使用git remote add origin github上边新建的仓库链接地址（将本地仓库与Github仓库建立链接）
+  git push -u origin master 如果失败了那么就输入下面指令
+  git pull --rebase origin master（先将内容合在推送）
+  在使用上上个指令进行推送
+
+10.将远程仓库修改的东西申请到本地仓库
+	git fetch origin
+        git merge origin/master    测试通过
+
+
