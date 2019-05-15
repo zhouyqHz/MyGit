@@ -41,12 +41,8 @@ MYSQL_FIELD *mysqlField ; //保存字段名字信息
 MYSQL_ROW 	mysqlRow;
 //socket相关变量
 int socketfd;
-int count = 0;
-int count_flag;
-int socketfd_rec;
-int socketfd_send;
 char Buff[1024];//socket缓冲
-int  rec_n;		//socket接收标志
+int  rec_n;		//socket接收标志以及位数
 //建立一个socket监听变量
 int listenfd;
 //线程处理函数（基本上数据处理都在线程函数里）
@@ -58,7 +54,7 @@ int  main()
 	struct sockaddr_in sockaddr;
 	sockaddr.sin_family = AF_INET;
 	sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	sockaddr.sin_port = htons(6280);
+	sockaddr.sin_port = htons(5000);
 	listenfd = socket(AF_INET,SOCK_STREAM,0);//IPV4,TCP
 	//建立bind，绑定端口
 	bind(listenfd,(struct sockaddr *) &sockaddr,sizeof(sockaddr));
@@ -88,6 +84,7 @@ int  main()
 //子线程处理函数
 void *thread(void *arg)
 {
+	//将传进来的socketfd转换成本线程中的变量
 	int socketfd = *(int*)arg;
 	printf("socketfd in pthread=%d\n",socketfd);
 	while(1)
@@ -99,14 +96,68 @@ void *thread(void *arg)
 		//数据有效
 		if(rec_n>0)
 		{
-			if(Buff[0]==0x30&&Buff[1]==0x31)
+			//1.下位机心跳包
+			if(rec_n==16&&Buff[14]==0x42&&Buff[15]==0x01)
 			{
-				
+				printf("Heart Bite Coming\n");
+			}
+			//2.如果协议长度是75，则是下位机每半小时上传的数据
+			else if( (rec_n==75)&&(Buff[14]==0x04)&&(Buff[15]==0x01))
+			{
+				printf("Client Data Coming\n");
+			}
+			//3如果是从网页发来的校准时间命令
+			else if( (rec_n==20)&&(Buff[0]=='f')&&(Buff[5]=='7')&&(Buff[6]=='0')&&(Buff[7]=='0'))	
+			{
+				printf("Web Check Time Coming\n");
+			}
+			 //4如果是从网页发来的刷新数据命令(已好)
+            else if( (rec_n==8)&&(Buff[0]=='f')&&(Buff[5]=='2'))
+			{
+				printf("Web Refash Data Coming\n");
+			}
+			//5如果是从网页发来的设置开关命令(已经成功)
+            else if( (rec_n==8)&&(Buff[0]=='f')&&(Buff[5]=='4')&&(Buff[6]=='0')&&((Buff[7]=='0')||(Buff[7]=='1')))	
+			{
+				printf("Web Set Switch Coming\n");
+			}
+			//6如果是从网页发来的设置工作时间命令(仅时分)
+            else if( (rec_n==16)&&(Buff[0]=='f')&&(Buff[14]!=0x42))
+			{
+				printf("Web Set Work Time Coming\n");
+			}
+			//7如果是从网页发来的设置报警范围命令
+            else if( (rec_n==35)&&(Buff[0]=='f')&&(Buff[5]=='6'))
+			{
+				printf("Web Set Alarm Range Coming\n");
+			}
+			//8.如果是从网页发来的设置电话命令
+            else if( (rec_n==21)&&(Buff[0]=='s')&&(Buff[18]=='f'))
+			{
+				printf("Web Set Telephone Number Coming\n");
+			}
+			//9.如果是从网页发来的上传图片命令
+            else if( (rec_n==21)&&(Buff[0]=='s')&&(Buff[18]=='a'))
+			{
+				printf("Web Request Picture Coming\n");
+			}
+			//10.如果协议长度是8位的应答
+            else if( (Buff[0]==0x66)&&(Buff[1]==0x00)&&(Buff[14]!=0x42)&&(rec_n!=19))
+			{
+				printf("Web 8Bite Request Coming\n");
 			}
 			
-			send(socketfd_rec, Buff, sizeof(Buff), 0);
+			
+			send(socketfd, Buff, sizeof(Buff), 0);
 		}
 		//rec_n=0则说明客户端断开
+		else if(rec_n==0)
+		{
+			printf("Socket Close\n");
+			//关闭socket，退出子线程
+			close(socketfd);
+			pthread_exit(NULL);
+		}
 		
 	}
 }
