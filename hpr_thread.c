@@ -96,6 +96,10 @@ void *thread(void *arg)
 		//数据有效
 		if(rec_n>0)
 		{
+			//字符数组结束字符
+			Buff[rec_n] = '\0';
+			//打印出数据，长度
+			printf("recv from socketfd%d:%s lenth:%d\n",socketfd, Buff, rec_n);	
 			//1.下位机心跳包
 			if(rec_n==16&&Buff[14]==0x42&&Buff[15]==0x01)
 			{

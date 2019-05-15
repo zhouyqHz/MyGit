@@ -265,7 +265,7 @@ void mychulizero( )
     m_cethrebuf[107] = ')';
 
 }
-
+//进程函数
 int processthread(int sockfd)
 {
     pid_t pid = getpid();
@@ -307,6 +307,7 @@ int processthread(int sockfd)
         bzero(msgbuffer,sizeof(msgbuffer));	/*清空字符串。*/
         //判断是否退出while(1)
         int ret=0;
+		//判断端口可读性
         if((ret=(select(sockfd+1,&read_sock,NULL,NULL,&tout)))<0)
         {
             printf("ERROR SELECT\n");
