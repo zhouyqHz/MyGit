@@ -59,6 +59,8 @@ char 	m_picpath[50]="/hp/pic";
 int 	m_picfilefid;
 char 	chensqlstrout[600];		//刷新和心跳包所用sqlstring
 char	xtbsql[100];
+char    Mysql_Updata_Location_Head[] = "UPDATE lamp_location SET longitude='10',latitude='10' Where lamp_id='1231'";
+char    Mysql_Updata_Location_All[100];
 char 	xtbsqlpre[]="insert into tb_xtb_record(txr_lamp_id,txr_xtb_time,txr_lamp_sockfd,txr_lamp_pid) values(";
 char	xtbselectpre[]= "SELECT txr_lamp_id,txr_xtb_time,txr_lamp_sockfd,txr_lamp_pid FROM tb_xtb_record WHERE txr_lamp_id=";
 char	xtbselectsuffix[]= " ORDER BY txr_xtb_time DESC LIMIT 1;";
@@ -82,6 +84,9 @@ char 	m_worktime[12]; //工作时间
 int 	m_status=0;		//设置开关状态标志
 char 	m_alarm[11];   	//报警上下限设置
 char 	m_checktime[12];//时间校准
+//经度，纬度
+char 	lamp_location_longitude[11] = "";
+char 	lamp_location_lantitude[11] = "";
 
 //数据库相关
 int 	res;
@@ -263,6 +268,7 @@ void mychulizero( )
     m_cethrebuf[106] = msgbuffer[44];
     //结束符号
     m_cethrebuf[107] = ')';
+	
 
 }
 //进程函数
@@ -426,7 +432,14 @@ int processthread(int sockfd)
             //2.如果协议长度是75，则是下位机每半小时上传的数据
             else if( (m_receivelength==81)&&(msgbuffer[0]==0x66)&&(msgbuffer[14]==0x04))
             {
-
+				//截取出BUff中的其中GPS定位数据
+				strncpy(lamp_location_longitude, msgbuffer+129, 10);
+				strncpy(lamp_location_lantitude, msgbuffer+142, 10);
+				//字符串结束符
+				lamp_location_longitude[10] = '\0';
+				lamp_location_lantitude[10] = '\0';
+				
+				
                 printf("%d\r\n",m_receivelength);
                 int i;
                 for(i=0; i<81; i++)

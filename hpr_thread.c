@@ -30,6 +30,7 @@ char Buff_Led_state[22] = "";
 //与本工程功能无关
 char Mysql_Value_Data[22] = "";
 char Mysql_Num_Data[50] = "";
+char xtb_arr[4] = "";		//心跳包sql地址
 //****Mysql操作结果
 int res;
 //线程标志符
@@ -104,6 +105,8 @@ void *thread(void *arg)
 			if(rec_n==16&&Buff[14]==0x42&&Buff[15]==0x01)
 			{
 				printf("Heart Bite Coming\n");
+				//截取出BUff中的其中几位数据
+				strncpy(Mysql_Value_Data, Buff+2, 4);
 			}
 			//2.如果协议长度是75，则是下位机每半小时上传的数据
 			else if( (rec_n==75)&&(Buff[14]==0x04)&&(Buff[15]==0x01))
