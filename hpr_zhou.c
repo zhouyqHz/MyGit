@@ -26,7 +26,7 @@
 #include <sys/msg.h>
 #include <errno.h>
 
-#define PORT  		9012
+#define PORT  		5000
 #define MAX  10
 #define BUFFER_SIZE 1024
 #define MSGBUFSIZ 22
@@ -61,7 +61,9 @@ char 	chensqlstrout[600];		//刷新和心跳包所用sqlstring
 char	xtbsql[100];
 char    Mysql_Updata_Location_Head[] = "UPDATE lamp_location SET longitude='10',latitude='10' Where lamp_id='1231'";
 char    Mysql_Updata_Location_All[100];
-char 	xtbsqlpre[]="insert into tb_xtb_record(txr_lamp_id,txr_xtb_time,txr_lamp_sockfd,txr_lamp_pid) values(";
+//char 	xtbsqlpre[]="insert into tb_xtb_record(txr_lamp_id,txr_xtb_time,txr_lamp_sockfd,txr_lamp_pid) values(";
+char 	Mysql_Updata_Heartbit_Time[100];
+char 	Mysql_Updata_Heartbit_Time_Head[] = "UPDATE lamp_state_record SET lamp_heartbit_time='";
 char	xtbselectpre[]= "SELECT txr_lamp_id,txr_xtb_time,txr_lamp_sockfd,txr_lamp_pid FROM tb_xtb_record WHERE txr_lamp_id=";
 char	xtbselectsuffix[]= " ORDER BY txr_xtb_time DESC LIMIT 1;";
 char 	msg[] ="This is the message from server.Connected.\n";
@@ -92,7 +94,7 @@ char 	lamp_location_lantitude[11] = "";
 int 	res;
 int 	first_row = 1;
 char 	buffer[]="chenxiai test";
-char 	chensqlstr[]= "insert into  tb_lamp_record_20171011(tlr_lamp_id,tlr_air_temperature,tlr_status,tlr_photovoltaic_current,tlr_photovoltaic_voltage,tlr_battery_current,tlr_battery_voltage,tlr_load_current,tlr_air_humidity,tlr_water_temperature,tlr_upload_time,tlr_warming,tlr_alarm_type,tlr_co2_concentation,tlr_soil_moisture)  values(";
+char 	chensqlstr[]= "insert into  lamp_data_record(tlr_lamp_id,tlr_air_temperature,tlr_state,tlr_photovoltaic_current,tlr_photovoltaic_voltage,tlr_battery_current,tlr_battery_voltage,tlr_load_current,tlr_air_humidity,tlr_water_temperature,tlr_upload_time,tlr_waring,tlr_alarm_type,tlr_co2_concentation,tlr_soil_moisture)  values(";
 char*	txr_lamp_id;
 char*	txr_xtb_time;
 char*	txr_lamp_sockfd;
@@ -122,95 +124,95 @@ void mychulizero( )
     /////////////////////////////////////////////////////
     //空气温度的处理
     /////////////////////////////////////////////////////
-    m_cethrebuf[9]  = msgbuffer[33];
-    m_cethrebuf[10] = msgbuffer[34];
+    m_cethrebuf[9]  = msgbuffer[39];
+    m_cethrebuf[10] = msgbuffer[40];
     m_cethrebuf[11] = '.';
-    m_cethrebuf[12] = msgbuffer[35];
+    m_cethrebuf[12] = msgbuffer[41];
     m_cethrebuf[13] = ',';
     /////////////////////////////////////////////////////
     //紫外灯（开/关）的处理
     /////////////////////////////////////////////////////
-    m_cethrebuf[14] = msgbuffer[80];
+    m_cethrebuf[14] = msgbuffer[16];
     m_cethrebuf[15] = ',';
     /////////////////////////////////////////////////////
     //光伏电流的处理
     /////////////////////////////////////////////////////
-    m_cethrebuf[16] = msgbuffer[18];
-    m_cethrebuf[17] = msgbuffer[19];
+    m_cethrebuf[16] = msgbuffer[24];
+    m_cethrebuf[17] = msgbuffer[25];
     m_cethrebuf[18] = '.';
-    m_cethrebuf[19] = msgbuffer[20];
+    m_cethrebuf[19] = msgbuffer[26];
     m_cethrebuf[20] = ',';
     /////////////////////////////////////////////////////
     //光伏电压的处理
     /////////////////////////////////////////////////////
-    m_cethrebuf[21] = msgbuffer[21];
-    m_cethrebuf[22] = msgbuffer[22];
+    m_cethrebuf[21] = msgbuffer[27];
+    m_cethrebuf[22] = msgbuffer[28];
     m_cethrebuf[23] = '.';
-    m_cethrebuf[24] = msgbuffer[23];
+    m_cethrebuf[24] = msgbuffer[29];
     m_cethrebuf[25] = ',';
     /////////////////////////////////////////////////////
     //蓄电池电流的处理
     /////////////////////////////////////////////////////
-    m_cethrebuf[26] = msgbuffer[24];
-    m_cethrebuf[27] = msgbuffer[25];
+    m_cethrebuf[26] = msgbuffer[30];
+    m_cethrebuf[27] = msgbuffer[31];
     m_cethrebuf[28] = '.';
-    m_cethrebuf[29] = msgbuffer[26];
+    m_cethrebuf[29] = msgbuffer[32];
     m_cethrebuf[30] = ',';
     /////////////////////////////////////////////////////
     //蓄电池电压的处理
     /////////////////////////////////////////////////////
-    m_cethrebuf[31] = msgbuffer[27];
-    m_cethrebuf[32] = msgbuffer[28];
+    m_cethrebuf[31] = msgbuffer[33];
+    m_cethrebuf[32] = msgbuffer[34];
     m_cethrebuf[33] = '.';
-    m_cethrebuf[34] = msgbuffer[29];
+    m_cethrebuf[34] = msgbuffer[35];
     m_cethrebuf[35] = ',';
     /////////////////////////////////////////////////////
     //负载电流的处理
     /////////////////////////////////////////////////////
-    m_cethrebuf[36] = msgbuffer[30];
-    m_cethrebuf[37] = msgbuffer[31];
+    m_cethrebuf[36] = msgbuffer[36];
+    m_cethrebuf[37] = msgbuffer[37];
     m_cethrebuf[38] = '.';
-    m_cethrebuf[39] = msgbuffer[32];
+    m_cethrebuf[39] = msgbuffer[38];
     m_cethrebuf[40] = ',';
     /////////////////////////////////////////////////////
     //空气湿度的处理
     /////////////////////////////////////////////////////
-    m_cethrebuf[41] = msgbuffer[36];
-    m_cethrebuf[42] = msgbuffer[37];
+    m_cethrebuf[41] = msgbuffer[42];
+    m_cethrebuf[42] = msgbuffer[43];
     m_cethrebuf[43] = '.';
-    m_cethrebuf[44] = msgbuffer[38];
+    m_cethrebuf[44] = msgbuffer[44];
     m_cethrebuf[45] = ',';
     /////////////////////////////////////////////////////
     //水温的处理
     /////////////////////////////////////////////////////
-    m_cethrebuf[46] = msgbuffer[39];
-    m_cethrebuf[47] = msgbuffer[40];
+    m_cethrebuf[46] = msgbuffer[45];
+    m_cethrebuf[47] = msgbuffer[46];
     m_cethrebuf[48] = '.';
-    m_cethrebuf[49] = msgbuffer[41];
+    m_cethrebuf[49] = msgbuffer[47];
     m_cethrebuf[50] = ',';
     /////////////////////////////////////////////////////
     //年分的处理
     /////////////////////////////////////////////////////
-    m_cethrebuf[51] = msgbuffer[61];
-    m_cethrebuf[52] = msgbuffer[62];
-    m_cethrebuf[53] = msgbuffer[63];
-    m_cethrebuf[54] = msgbuffer[64];
+    m_cethrebuf[51] = msgbuffer[108];
+    m_cethrebuf[52] = msgbuffer[109];
+    m_cethrebuf[53] = msgbuffer[110];
+    m_cethrebuf[54] = msgbuffer[111];
 
     /////////////////////////////////////////////////////
     //月日的处理
     /////////////////////////////////////////////////////
-    m_cethrebuf[55] = msgbuffer[65];
-    m_cethrebuf[56] = msgbuffer[66];
-    m_cethrebuf[57] = msgbuffer[67];
-    m_cethrebuf[58] = msgbuffer[68];
+    m_cethrebuf[55] = msgbuffer[112];
+    m_cethrebuf[56] = msgbuffer[113];
+    m_cethrebuf[57] = msgbuffer[114];
+    m_cethrebuf[58] = msgbuffer[115];
 
     /////////////////////////////////////////////////////
     //时分的处理
     /////////////////////////////////////////////////////
-    m_cethrebuf[59] = msgbuffer[69];
-    m_cethrebuf[60] = msgbuffer[70];
-    m_cethrebuf[61] = msgbuffer[71];
-    m_cethrebuf[62] = msgbuffer[72];
+    m_cethrebuf[59] = msgbuffer[116];
+    m_cethrebuf[60] = msgbuffer[117];
+    m_cethrebuf[61] = msgbuffer[118];
+    m_cethrebuf[62] = msgbuffer[119];
     m_cethrebuf[63] = '0';
     m_cethrebuf[64] = '0';
     m_cethrebuf[65] = ',';
@@ -255,17 +257,17 @@ void mychulizero( )
     m_cethrebuf[97] = ',';
 
     //CO2浓度
-    m_cethrebuf[98] = msgbuffer[57];
-    m_cethrebuf[99] = msgbuffer[58];
-    m_cethrebuf[100] = msgbuffer[59];
-    m_cethrebuf[101] = msgbuffer[60];
+    m_cethrebuf[98] =  msgbuffer[84];
+    m_cethrebuf[99] =  msgbuffer[85];
+    m_cethrebuf[100] = msgbuffer[86];
+    m_cethrebuf[101] = msgbuffer[87];
     m_cethrebuf[102] = ',';
 
     //土壤湿度
-    m_cethrebuf[103] = msgbuffer[42];
-    m_cethrebuf[104] = msgbuffer[43];
+    m_cethrebuf[103] = msgbuffer[48];
+    m_cethrebuf[104] = msgbuffer[49];
     m_cethrebuf[105] = '.';
-    m_cethrebuf[106] = msgbuffer[44];
+    m_cethrebuf[106] = msgbuffer[50];
     //结束符号
     m_cethrebuf[107] = ')';
 	
@@ -275,7 +277,7 @@ void mychulizero( )
 int processthread(int sockfd)
 {
     pid_t pid = getpid();
-
+	int m_receivelength;
     //消息相关
     extern int errno;
     fd_set read_sock;   //select
@@ -303,7 +305,7 @@ int processthread(int sockfd)
         fprintf(stderr,"mysql_init failed\n");
         return EXIT_FAILURE;
     }
-    mysql_main = mysql_real_connect(mysql_main,"localhost","root","1206","insectlamp",0,NULL,0);	//不能放外面
+    mysql_main = mysql_real_connect(mysql_main,"localhost","root","1206","lamptest",0,NULL,0);	//不能放外面
     FD_ZERO(&read_sock);
     FD_SET(sockfd,&read_sock);
 
@@ -343,7 +345,9 @@ int processthread(int sockfd)
                     break;
                 }
             }
-            printf("\n\nchildprocess msgbuffer: %s\nm_receivelength:%d\nsockfd: %d\n",msgbuffer,m_receivelength,sockfd);
+			//加入字符串结束符（很有必要送）
+			msgbuffer[m_receivelength] = '\0';
+            printf("\nchildprocess msgbuffer: %s\nm_receivelength:%d\nsockfd: %d\n",msgbuffer,m_receivelength,sockfd);
 
 
             // //不收图
@@ -352,8 +356,7 @@ int processthread(int sockfd)
             //1.从终端发来的普通心跳包的处理
             if( (m_receivelength==16)&&(msgbuffer[14]==0x42)&&(msgbuffer[15]==0x01))
             {
-                printf("0......\n");
-                printf("xtb......\n");
+                printf("Heart Beat Coming\n");
                 //往消息队列中发送数据
                 struct msg_st data;
                 data.msg_type = 1; // 注意2,发送数据时，类型为1
@@ -361,10 +364,6 @@ int processthread(int sockfd)
                 xtb_arr[1]=msgbuffer[11];
                 xtb_arr[2]=msgbuffer[12];
                 xtb_arr[3]=msgbuffer[13];	//多余V1235000
-                // xtb_arr[4]=msgbuffer[10];
-                // xtb_arr[5]=msgbuffer[11];
-                // xtb_arr[6]=msgbuffer[12];
-                // xtb_arr[7]=msgbuffer[13];	//多余V1235000
 
                 //往数据库插入心跳包记录
 
@@ -396,8 +395,8 @@ int processthread(int sockfd)
                 pid_arr[7]=pid%10+0x30;
 
 
-
-                strncat(xtbsql, xtbsqlpre,89);
+				//字符串拼接
+               /* strncat(xtbsql, xtbsqlpre,89);
                 strncat(xtbsql, xtb_arr,4);
                 strncat(xtbsql, ",'",2);
                 strncat(xtbsql, str_t,19);
@@ -405,16 +404,21 @@ int processthread(int sockfd)
                 strncat(xtbsql, sockfd_arr,4);
                 strncat(xtbsql,",",1);
                 strncat(xtbsql, pid_arr,8);
-                strncat(xtbsql,");",2);
+                strncat(xtbsql,");",2);*/
+				//字符串拼接
+				stpcpy(Mysql_Updata_Heartbit_Time, Mysql_Updata_Heartbit_Time_Head);
+				strcat(Mysql_Updata_Heartbit_Time, str_t);
+				strcat(Mysql_Updata_Heartbit_Time, "' WHERE lamp_id=");
+				strcat(Mysql_Updata_Heartbit_Time, xtb_arr);
+				//打印Mysql语句
+                printf("Mysql_Updata_Heartbit_Time=%s\n",Mysql_Updata_Heartbit_Time);
 
-                printf("xtbsql=%s\n",xtbsql);
-
-
+				//更新心跳包时间
                 if(mysql_main)
                 {
                     printf("mysql Connection success\n");
                     m_flag=1;
-                    res=mysql_query(mysql_main,xtbsql);
+                    res=mysql_query(mysql_main,Mysql_Updata_Heartbit_Time);
                     printf("res:%d\n",res);
                     if(res)
                     {
@@ -426,6 +430,7 @@ int processthread(int sockfd)
                     }
 
                 }
+				//本工程中不能关掉，因为不是每个判断都在连接的，本工程只做一次连接
                 //mysql_close(mysql_main);
             }
 
@@ -433,11 +438,11 @@ int processthread(int sockfd)
             else if( (m_receivelength==81)&&(msgbuffer[0]==0x66)&&(msgbuffer[14]==0x04))
             {
 				//截取出BUff中的其中GPS定位数据
-				strncpy(lamp_location_longitude, msgbuffer+129, 10);
-				strncpy(lamp_location_lantitude, msgbuffer+142, 10);
+				//strncpy(lamp_location_longitude, msgbuffer+129, 10);
+				//strncpy(lamp_location_lantitude, msgbuffer+142, 10);
 				//字符串结束符
-				lamp_location_longitude[10] = '\0';
-				lamp_location_lantitude[10] = '\0';
+				//lamp_location_longitude[10] = '\0';
+				//lamp_location_lantitude[10] = '\0';
 				
 				
                 printf("%d\r\n",m_receivelength);
@@ -453,13 +458,14 @@ int processthread(int sockfd)
                 // printf("%x\r\n",msgbuffer[60]);
                 
                 bzero(chensqlstrout,sizeof(chensqlstrout));	/*清空字符串。*/
-                mychulizero();
+                
+				mychulizero();
                 strcat(chensqlstrout, chensqlstr);
                 strcat(chensqlstrout, m_cethrebuf);
                 printf("chensqlstrout:%s\n",chensqlstrout);
                 printf("m_cethrebuf:%s\n",m_cethrebuf);
 
-                if(mysql_main)
+               /* if(mysql_main)
                 {
                     printf("mysql Connection success\n");
                     m_flag=1;
@@ -473,7 +479,7 @@ int processthread(int sockfd)
                     {
                         printf("75sqlok\n\n\n");
                     }
-                }
+                }*/
                 //mysql_close(mysql_main);
             }
 
