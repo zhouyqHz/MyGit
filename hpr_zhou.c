@@ -434,8 +434,8 @@ int processthread(int sockfd)
                 //mysql_close(mysql_main);
             }
 
-            //2.如果协议长度是75，则是下位机每半小时上传的数据
-            else if( (m_receivelength==81)&&(msgbuffer[0]==0x66)&&(msgbuffer[14]==0x04))
+            //2.如果协议长度是154，则是下位机每半小时上传的数据
+            else if( (m_receivelength==154)&&(msgbuffer[14]==0x04)&&(msgbuffer[15]==0x01))
             {
 				//截取出BUff中的其中GPS定位数据
 				//strncpy(lamp_location_longitude, msgbuffer+129, 10);
@@ -465,7 +465,7 @@ int processthread(int sockfd)
                 printf("chensqlstrout:%s\n",chensqlstrout);
                 printf("m_cethrebuf:%s\n",m_cethrebuf);
 
-               /* if(mysql_main)
+                if(mysql_main)
                 {
                     printf("mysql Connection success\n");
                     m_flag=1;
@@ -479,7 +479,7 @@ int processthread(int sockfd)
                     {
                         printf("75sqlok\n\n\n");
                     }
-                }*/
+                }
                 //mysql_close(mysql_main);
             }
 
