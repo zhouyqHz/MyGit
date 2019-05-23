@@ -55,16 +55,11 @@ struct 	sockaddr_in addr;
 int 	addr_len = sizeof(struct sockaddr_in);
 fd_set 	myreadfds;
 int 	m_picflag=0;
-char 	m_picpath[50]="/hp/pic";
+char 	m_picpath[50]="/Mr_Zhou/picture/pic";
 int 	m_picfilefid;
 char 	chensqlstrout[600];		//刷新和心跳包所用sqlstring
 char	xtbsql[100];
-char    Mysql_Updata_Location_Head[] = "UPDATE lamp_location SET longitude='10',latitude='10' Where lamp_id='1231'";
-char    Mysql_Updata_Location_All[100];
-//char 	xtbsqlpre[]="insert into tb_xtb_record(txr_lamp_id,txr_xtb_time,txr_lamp_sockfd,txr_lamp_pid) values(";
-char 	Mysql_Updata_Heartbit_Time[100];
-char 	Mysql_Updata_Heartbit_Time_Head[] = "UPDATE lamp_state_record SET lamp_heartbit_time='";
-//char	xtbselectpre[]= "SELECT txr_lamp_id,txr_xtb_time,txr_lamp_sockfd,txr_lamp_pid FROM tb_xtb_record WHERE txr_lamp_id=";
+char 	xtbsqlpre[]="insert into tb_xtb_record(txr_lamp_id,txr_xtb_time,txr_lamp_sockfd,txr_lamp_pid) values(";
 char	xtbselectpre[]= "SELECT txr_lamp_id,txr_xtb_time,txr_lamp_sockfd,txr_lamp_pid FROM tb_xtb_record WHERE txr_lamp_id=";
 char	xtbselectsuffix[]= " ORDER BY txr_xtb_time DESC LIMIT 1;";
 char 	msg[] ="This is the message from server.Connected.\n";
@@ -87,15 +82,12 @@ char 	m_worktime[12]; //工作时间
 int 	m_status=0;		//设置开关状态标志
 char 	m_alarm[11];   	//报警上下限设置
 char 	m_checktime[12];//时间校准
-//经度，纬度
-char 	lamp_location_longitude[11] = "";
-char 	lamp_location_lantitude[11] = "";
 
 //数据库相关
 int 	res;
 int 	first_row = 1;
 char 	buffer[]="chenxiai test";
-char 	chensqlstr[]= "insert into  lamp_data_record(tlr_lamp_id,tlr_air_temperature,tlr_state,tlr_photovoltaic_current,tlr_photovoltaic_voltage,tlr_battery_current,tlr_battery_voltage,tlr_load_current,tlr_air_humidity,tlr_water_temperature,tlr_upload_time,tlr_waring,tlr_alarm_type,tlr_co2_concentation,tlr_soil_moisture)  values(";
+char 	chensqlstr[]= "insert into  tb_lamp_record_20171011(tlr_lamp_id,tlr_air_temperature,tlr_status,tlr_photovoltaic_current,tlr_photovoltaic_voltage,tlr_battery_current,tlr_battery_voltage,tlr_load_current,tlr_air_humidity,tlr_water_temperature,tlr_upload_time,tlr_warming,tlr_alarm_type,tlr_co2_concentation,tlr_soil_moisture)  values(";
 char*	txr_lamp_id;
 char*	txr_xtb_time;
 char*	txr_lamp_sockfd;
@@ -274,11 +266,11 @@ void mychulizero( )
 	
 
 }
-//进程函数
+
 int processthread(int sockfd)
 {
     pid_t pid = getpid();
-	int m_receivelength;
+
     //消息相关
     extern int errno;
     fd_set read_sock;   //select
@@ -316,7 +308,6 @@ int processthread(int sockfd)
         bzero(msgbuffer,sizeof(msgbuffer));	/*清空字符串。*/
         //判断是否退出while(1)
         int ret=0;
-		//判断端口可读性
         if((ret=(select(sockfd+1,&read_sock,NULL,NULL,&tout)))<0)
         {
             printf("ERROR SELECT\n");
@@ -346,9 +337,7 @@ int processthread(int sockfd)
                     break;
                 }
             }
-			//加入字符串结束符（很有必要送）
-			msgbuffer[m_receivelength] = '\0';
-            printf("\nchildprocess msgbuffer: %s\nm_receivelength:%d\nsockfd: %d\n",msgbuffer,m_receivelength,sockfd);
+            printf("\n\nchildprocess msgbuffer: %s\nm_receivelength:%d\nsockfd: %d\n",msgbuffer,m_receivelength,sockfd);
 
 
             // //不收图
@@ -357,6 +346,7 @@ int processthread(int sockfd)
             //1.从终端发来的普通心跳包的处理
             if( (m_receivelength==16)&&(msgbuffer[14]==0x42)&&(msgbuffer[15]==0x01))
             {
+                printf("0......\n");
                 printf("Heart Beat Coming\n");
                 //往消息队列中发送数据
                 struct msg_st data;
@@ -365,6 +355,10 @@ int processthread(int sockfd)
                 xtb_arr[1]=msgbuffer[11];
                 xtb_arr[2]=msgbuffer[12];
                 xtb_arr[3]=msgbuffer[13];	//多余V1235000
+                // xtb_arr[4]=msgbuffer[10];
+                // xtb_arr[5]=msgbuffer[11];
+                // xtb_arr[6]=msgbuffer[12];
+                // xtb_arr[7]=msgbuffer[13];	//多余V1235000
 
                 //往数据库插入心跳包记录
 
@@ -396,8 +390,8 @@ int processthread(int sockfd)
                 pid_arr[7]=pid%10+0x30;
 
 
-				//字符串拼接
-               /* strncat(xtbsql, xtbsqlpre,89);
+
+                strncat(xtbsql, xtbsqlpre,89);
                 strncat(xtbsql, xtb_arr,4);
                 strncat(xtbsql, ",'",2);
                 strncat(xtbsql, str_t,19);
@@ -405,21 +399,16 @@ int processthread(int sockfd)
                 strncat(xtbsql, sockfd_arr,4);
                 strncat(xtbsql,",",1);
                 strncat(xtbsql, pid_arr,8);
-                strncat(xtbsql,");",2);*/
-				//字符串拼接
-				stpcpy(Mysql_Updata_Heartbit_Time, Mysql_Updata_Heartbit_Time_Head);
-				strcat(Mysql_Updata_Heartbit_Time, str_t);
-				strcat(Mysql_Updata_Heartbit_Time, "' WHERE lamp_id=");
-				strcat(Mysql_Updata_Heartbit_Time, xtb_arr);
-				//打印Mysql语句
-                printf("Mysql_Updata_Heartbit_Time=%s\n",Mysql_Updata_Heartbit_Time);
+                strncat(xtbsql,");",2);
 
-				//更新心跳包时间
+                printf("xtbsql=%s\n",xtbsql);
+
+
                 if(mysql_main)
                 {
                     printf("mysql Connection success\n");
                     m_flag=1;
-                    res=mysql_query(mysql_main,Mysql_Updata_Heartbit_Time);
+                    res=mysql_query(mysql_main,xtbsql);
                     printf("res:%d\n",res);
                     if(res)
                     {
@@ -431,21 +420,13 @@ int processthread(int sockfd)
                     }
 
                 }
-				//本工程中不能关掉，因为不是每个判断都在连接的，本工程只做一次连接
                 //mysql_close(mysql_main);
             }
 
-            //2.如果协议长度是154，则是下位机每半小时上传的数据
+            //2.如果协议长度是75，则是下位机每半小时上传的数据
             else if( (m_receivelength==154)&&(msgbuffer[14]==0x04)&&(msgbuffer[15]==0x01))
             {
-				//截取出BUff中的其中GPS定位数据
-				//strncpy(lamp_location_longitude, msgbuffer+129, 10);
-				//strncpy(lamp_location_lantitude, msgbuffer+142, 10);
-				//字符串结束符
-				//lamp_location_longitude[10] = '\0';
-				//lamp_location_lantitude[10] = '\0';
-				
-				
+
                 printf("%d\r\n",m_receivelength);
                 int i;
                 for(i=0; i<81; i++)
@@ -459,8 +440,7 @@ int processthread(int sockfd)
                 // printf("%x\r\n",msgbuffer[60]);
                 
                 bzero(chensqlstrout,sizeof(chensqlstrout));	/*清空字符串。*/
-                
-				mychulizero();
+                mychulizero();
                 strcat(chensqlstrout, chensqlstr);
                 strcat(chensqlstrout, m_cethrebuf);
                 printf("chensqlstrout:%s\n",chensqlstrout);
@@ -2166,7 +2146,7 @@ int processthread(int sockfd)
                     close(m_picfilefid);
                     //mysql_close(mysql_main);
                     bzero(m_picpath,sizeof(m_picpath));
-                    strcat(m_picpath, "/hp/pic");
+                    strcat(m_picpath, "/Mr_Zhou/picture/pic");
 
                     printf("m_picflag=%d\n\n\n",m_picflag);
                 }
