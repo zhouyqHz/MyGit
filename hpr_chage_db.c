@@ -43,7 +43,7 @@ struct msg_st
 unsigned int sockarr[1000][2]= {0};
 
 int m_receivelength=0;
-unsigned char m_cethrebuf[120];
+unsigned char m_cethrebuf[150];
 unsigned char msgbuffer[1024];
 unsigned char Switch_Message_Rboot[90];
 unsigned char msgcommd[30];
@@ -87,7 +87,7 @@ char 	m_checktime[12];//时间校准
 int 	res;
 int 	first_row = 1;
 char 	buffer[]="chenxiai test";
-char 	chensqlstr[]= "insert into  tb_lamp_record_20171011(tlr_lamp_id,tlr_air_temperature,tlr_status,tlr_photovoltaic_current,tlr_photovoltaic_voltage,tlr_battery_current,tlr_battery_voltage,tlr_load_current,tlr_air_humidity,tlr_water_temperature,tlr_upload_time,tlr_warming,tlr_alarm_type,tlr_co2_concentation,tlr_soil_moisture)  values(";
+char 	chensqlstr[]= "insert into  tb_lamp_record_20171011(tlr_lamp_id,tlr_air_temperature,tlr_status,tlr_photovoltaic_current,tlr_photovoltaic_voltage,tlr_battery_current,tlr_battery_voltage,tlr_load_current,tlr_air_humidity,tlr_water_temperature,tlr_upload_time,tlr_warming,tlr_alarm_type,tlr_co2_concentation,tlr_soil_moisture,tlr_soil_ph,tlr_pm25)  values(";
 char*	txr_lamp_id;
 char*	txr_xtb_time;
 char*	txr_lamp_sockfd;
@@ -261,8 +261,22 @@ void mychulizero( )
     m_cethrebuf[104] = msgbuffer[49];
     m_cethrebuf[105] = '.';
     m_cethrebuf[106] = msgbuffer[50];
+	m_cethrebuf[107] = ',';
+	//土壤ph
+	m_cethrebuf[108] = msgbuffer[63];
+    m_cethrebuf[109] = msgbuffer[64];
+    m_cethrebuf[110] = '.';
+    m_cethrebuf[111] = msgbuffer[65];
+	m_cethrebuf[112] = ',';
+	//pm2.5
+	m_cethrebuf[113] = msgbuffer[88];
+    m_cethrebuf[114] = msgbuffer[89];
+    m_cethrebuf[115] = msgbuffer[90];
+    m_cethrebuf[116] = msgbuffer[91];
     //结束符号
-    m_cethrebuf[107] = ')';
+    m_cethrebuf[117] = ')';
+	m_cethrebuf[149] = '\0';
+	//printf("m_cethrebuf:%s\n",m_cethrebuf);
 	
 
 }
@@ -429,9 +443,9 @@ int processthread(int sockfd)
 
                 printf("%d\r\n",m_receivelength);
                 int i;
-                for(i=0; i<81; i++)
+               // for(i=0; i<81; i++)
                     {
-                        printf("msgbuffer:%x\n",msgbuffer[i]);
+                  //      printf("msgbuffer:%x\n",msgbuffer[i]);
                     }
                 // printf("sdlampfa75 data\n");
                 // printf("%x\r\n",msgbuffer[57]);
