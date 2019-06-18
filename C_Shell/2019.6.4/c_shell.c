@@ -1,3 +1,4 @@
+//本工程的接收缓冲（1024）与发送缓冲（1024*512）是分开的
 #include <stdio.h>			//c标准库
 #include <stdlib.h>  		//c语言调用shell命令头文件所需,int转char需要
 #include <string.h> 		//字符串拼接头文件
@@ -26,14 +27,14 @@ int  Time_Count;
 //socket相关变量
 int  socketfd = 0;
 char Receive_Buff[1024];//接收缓冲数组
-char Send_Buff[1024];//接收缓冲数组
+char Send_Buff[1024];//发送缓冲数组
 int  Receive_Len = 0;   //接收长度
 //常函数声明
 void Socket_Inil();
 void Gpio_Inil();
 void Take_And_Transform_Video();
 int  readFileList(char *basePath);
-void Read_And_Send_Video();
+void Read_And_Send_Video(char *File_name);
 //线程函数声明
 pthread_t id;
 void *Socket_Connect(void *arg);
@@ -42,6 +43,8 @@ void *Human_Detection();
 //********************************主函数
 int main()
 {	
+	//用shell命令校准时间，非常重要
+	system("sudo ntpd -s -d");
 	//socket客户端初始化
 	Socket_Inil();	
 	pthread_create(&id, NULL, Socket_Connect, &socketfd);
@@ -71,11 +74,20 @@ void Socket_Inil()
 	//补充服务端地址结构体信息
 	Sever_Add.sin_family = AF_INET;
     Sever_Add.sin_port = htons(6280);
-    Sever_Add.sin_addr.s_addr=inet_addr("192.168.1.161");
+    Sever_Add.sin_addr.s_addr=inet_addr("106.14.34.209");
     bzero(&(Sever_Add.sin_zero), 8);
-	//创建与服务端的连接
-	connect(socketfd,(struct sockaddr*)&Sever_Add,sizeof(struct sockaddr));
-	printf("Socket_Inil ok\n");
+	//创建与服务端的连接,成功返回0
+	if(connect(socketfd,(struct sockaddr*)&Sever_Add,sizeof(struct sockaddr))==0)
+	{
+		printf("Socket_Inil ok\n");
+		//发送FS，更新本端点的socketfd
+		send(socketfd, "FS", 2, 0);
+	}
+	else 
+	{
+		printf("Socket_Connect Error\n");
+		exit(0);
+	}
 }
 //这个由28号gpio控制
 void Take_And_Transform_Video()
@@ -123,10 +135,18 @@ void Take_And_Transform_Video()
 	//调用生成MP4的shell命令
 	system(Transform_Video);
 }
-void Read_And_Send_Video()
+void Read_And_Send_Video(char *File_name)
 {
+	char File_Name_All[100] = "";
+	//拼接出要打开的文件
+	stpcpy(File_Name_All, "/home/pi/Desktop/Take_Video/");
+	strcat(File_Name_All, File_name);
+	File_Name_All[99] = '\0';
+	printf("File_Name_All:%s\n",File_Name_All);
 	//打开文件，变成文件流的形式
-	FILE* pf = fopen("/home/pi/Desktop/Take_Video/2019-05-27-pm-16-18-43.mp4", "rb");
+	//FILE* pf = fopen("/home/pi/Desktop/Take_Video/2019-05-27-pm-16-18-43.mp4", "rb");
+	//打开文件
+	FILE* pf = fopen(File_Name_All, "rb");
 	if(pf == NULL) 
 	{  
 		printf("open file failed!\n");  
@@ -140,8 +160,9 @@ void Read_And_Send_Video()
 	//把文件流通过write函数发掉
 	while((len = fread(pack, sizeof(char), 1024*512, pf)) > 0)  
 	{  
-		//system("clear");  
+		system("clear");  
 		//printf("send data size = %d \t", len);  
+		//将本次缓冲数据发送出去
 		write(socketfd, pack, len);  
 		//清空缓存区
 		bzero(pack,1024*512);  
@@ -149,6 +170,8 @@ void Read_And_Send_Video()
 	}
 	//打印发文件流的次数
 	printf("count= %d \n", count); 
+	//发送结束文件发送的指令(不知道为什么没发过去)
+	write(socketfd, "VEND", 4);
 	count = 0;
 }
 //获取指定目录下的所有文件名字(这里要更新目录，则需要统计)
@@ -170,6 +193,7 @@ int readFileList(char *basePath)
 		else if(ptr->d_type == 8)    //file（8就是文件的标示，本工程只找文件）
 		{
 			bzero(Send_Buff, sizeof(Send_Buff));
+			//把int转成char
 			sprintf(FN_Num_Char, "%d", FN_Num);
 			//打印文件名
 			printf("File_Name:%s\n",ptr->d_name);
@@ -181,12 +205,17 @@ int readFileList(char *basePath)
 			strcat(Send_Buff, ptr->d_name);
 			Send_Buff[1024] = '\0';
 			//小于0 则出错。。为什么write不能发送，只能用send发送
-			send(socketfd, Send_Buff, sizeof(Send_Buff), 0);
-			printf("%s\n", Send_Buff);
-			//只有当服务端有消息返回的时候才会继续发
-			while(recv(socketfd, Receive_Buff, sizeof(Receive_Buff), 0)<=0);
+			//不是正确的文件，不发送
+			if(Send_Buff[4]=='2'&&Send_Buff[27]!='h')
+			{
+				send(socketfd, Send_Buff, sizeof(Send_Buff), 0);
+				printf("%s\n", Send_Buff);
+				//只有当服务端有非空消息返回的时候才会继续发
+				while(recv(socketfd, Receive_Buff, sizeof(Receive_Buff), 0)<=0);
+				//表示文件个数
+				FN_Num++;
+			}
 		}
-		FN_Num++;
 		bzero(FN_Num_Char, sizeof(FN_Num_Char));
 	}
 	closedir(dir);
@@ -198,30 +227,41 @@ void *Socket_Connect(void *arg)
 {
 	//socketfd传入线程
 	int socketfd = *(int*)arg;
-	//Read_And_Send_Video();
 	while(1)	
 	{
-		printf("Client_Ready\n");
+		//printf("Client_Receive_Ready\n");
 		//本函数会堵塞
 		Receive_Len = recv(socketfd, Receive_Buff, sizeof(Receive_Buff), 0);
 		//这里在接受时做了成功与否的判断，最好在前面的发送那边也要做判断，exit(0);什么意思不太知道
-		if(Receive_Len==-1)
+		if(Receive_Len<=0)
 		{
-			printf("Recv Error\n");
-			exit(1);//好像是退出的
+			printf("Disconnect With Server\n");
+			exit(0);
 		}
 		//数据有效性验证
 		else if(Receive_Len>0)
 		{
 			//增加结束位，转变成字符串
 			Receive_Buff[Receive_Len]  = '\0';
-			printf("Received_Message : %s \n",Receive_Buff);
+			//printf("Received_Message : %s \n",Receive_Buff);
 			//发送文件名
 			if(Receive_Buff[0]=='F'&&Receive_Buff[1]=='N')
 			{
-				//读取目录_并通过socket发送出去
-				readFileList("/home/pi/Desktop/Take_Video/");
-				printf("Send Video Succeed\n");
+				//读取目录_并通过socket发送出去(返回一个非空，才会继续发下一个)
+				readFileList("/home/pi/Desktop/Take_Video/");//本函数也会堵塞
+				//发送结束，防止服务端继续发东西过来,要用这个指令结束本次数据更新
+				send(socketfd, "END", 3, 0);
+				printf("Send Video_Nme Succeed\n");
+			}
+			//服务器发来要上传文件的命令
+			else if(Receive_Buff[0]=='W'&&Receive_Buff[1]=='U')
+			{
+				char Socket_File_Name[50] = "";
+				strncpy(Socket_File_Name, Receive_Buff+2,26);
+				Socket_File_Name[49] = '\0';
+				printf("Socket_File_Name:%s\n",Socket_File_Name);
+				//读取以及发送文件
+				Read_And_Send_Video(Socket_File_Name);
 			}
 		}
 	}
@@ -240,7 +280,7 @@ void *Human_Detection()
 			delay (500);  //延时500ms
 			if(digitalRead (28) == 1)
 			{
-				//Take_And_Transform_Video();//本函数的shell命令会造成堵塞
+				Take_And_Transform_Video();//本函数的shell命令会造成堵本线程塞
 				printf("Take_And_Transform_Video Succeed\n");
 			}
 		}
